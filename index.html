@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="DigiCam Photobooth - A modern retro-inspired digital photobooth with live webcam filters, countdown triggers, audio synthesis, and customizable layout strips.">
+  <title>DigiCam - Retro Photobooth & Strip Generator</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;500;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Screen 1: Splash/Landing Screen -->
+  <main id="screen-landing" class="screen active">
+    <div class="glow-container">
+      <div class="glow-circle gc-purple"></div>
+      <div class="glow-circle gc-blue"></div>
+    </div>
+    <div class="landing-card card glass">
+      <div class="logo-area">
+        <div class="badge">VINTAGE SOUL</div>
+        <h1 class="logo-title">DIGI<span class="neon-text">CAM</span></h1>
+        <p class="tagline">Your personal retro-inspired digital photobooth</p>
+      </div>
+
+      <div class="features-preview">
+        <div class="feature-item">
+          <div class="feat-icon">📷</div>
+          <div class="feat-text">
+            <h3>4-Shot Strip</h3>
+            <p>Capture a classic sequence of images automatically.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feat-icon">✨</div>
+          <div class="feat-text">
+            <h3>Live GPU Filters</h3>
+            <p>Glitch, Cyberpunk, Noir, Sepia, and Warm Vintage presets.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feat-icon">🎨</div>
+          <div class="feat-text">
+            <h3>Custom Templates</h3>
+            <p>Choose borders, fonts, colors, watermarks, and styles.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permission Request / Launch Button -->
+      <div class="action-onboarding">
+        <button id="btn-start-booth" class="btn btn-primary btn-large">
+          <span>Get Started</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <p class="onboarding-tip">Requires webcam access to capture photos. Privacy is guaranteed: all processing is 100% local in your browser.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Screen 2: Photobooth Workspace -->
+  <main id="screen-workspace" class="screen">
+    <header class="app-header">
+      <div class="logo-small">DIGI<span>CAM</span></div>
+      <div class="header-controls">
+        <button id="btn-sound-toggle" class="btn btn-icon" title="Toggle Sound">
+          <span class="icon">🔊</span>
+        </button>
+        <button id="btn-exit-workspace" class="btn btn-secondary btn-small">Exit</button>
+      </div>
+    </header>
+
+    <div class="workspace-layout">
+      <!-- Left Column: Video Preview and Timeline -->
+      <section class="workspace-main">
+        <div class="video-container card glass">
+          <!-- Video scanlines, flash overlay, and countdown overlay -->
+          <div class="scanlines"></div>
+          <div class="flash-overlay" id="flash-overlay"></div>
+          <div class="countdown-overlay" id="countdown-display">3</div>
+          
+          <video id="webcam-preview" autoplay playsinline muted></video>
+          <div class="camera-status">
+            <span class="pulse-dot"></span>
+            <span id="status-label">LIVE STREAM</span>
+          </div>
+        </div>
+
+        <!-- Captured Frames Timeline (Progress bar & thumbnails) -->
+        <div class="timeline-container card glass">
+          <div class="timeline-header">
+            <h4>SHOT TIMELINE</h4>
+            <span id="timeline-progress">0 / 4 Captures</span>
+          </div>
+          <div class="thumbnail-grid" id="thumbnail-grid">
+            <div class="thumb-slot empty" data-index="0"><span class="slot-num">1</span></div>
+            <div class="thumb-slot empty" data-index="1"><span class="slot-num">2</span></div>
+            <div class="thumb-slot empty" data-index="2"><span class="slot-num">3</span></div>
+            <div class="thumb-slot empty" data-index="3"><span class="slot-num">4</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Settings & Filter selection -->
+      <aside class="workspace-sidebar card glass">
+        <div class="control-section">
+          <h3>1. LAYOUT MODE</h3>
+          <div class="preset-selector grid-2">
+            <button class="btn btn-selector active" data-shots="4">
+              <strong>4 Shots</strong>
+              <span>Classic Strip</span>
+            </button>
+            <button class="btn btn-selector" data-shots="3">
+              <strong>3 Shots</strong>
+              <span>Shorter Strip</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <h3>2. FILTER</h3>
+          <div class="filters-grid" id="filters-container">
+            <!-- Filter cards loaded dynamically via JS with thumbnails -->
+          </div>
+        </div>
+
+        <div class="capture-action-section">
+          <button id="btn-trigger-capture" class="btn btn-capture">
+            <div class="shutter-inner">
+              <span class="btn-text">TAKE PHOTOS</span>
+              <span class="btn-subtext">3s Countdown Sequence</span>
+            </div>
+          </button>
+          <p class="action-caption">Wait 3 seconds between each shutter flash!</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Screen 3: Strip Customizer & Export -->
+  <main id="screen-export" class="screen">
+    <header class="app-header">
+      <div class="logo-small">DIGI<span>CAM</span></div>
+      <div class="header-controls">
+        <button id="btn-restart" class="btn btn-secondary btn-small">Start Over</button>
+      </div>
+    </header>
+
+    <div class="export-layout">
+      <!-- Left Column: Final Generated Strip Preview -->
+      <section class="strip-preview-section">
+        <div class="canvas-scroll-container">
+          <div class="strip-shadow-wrapper">
+            <canvas id="strip-canvas"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Strip Editing Customizer Panels -->
+      <aside class="customizer-sidebar card glass">
+        <h2 class="sidebar-title">CUSTOMIZE STRIP</h2>
+
+        <!-- Customizer Panel 1: Border Theme -->
+        <div class="control-section">
+          <h3>BORDER THEME</h3>
+          <div class="theme-picker grid-3">
+            <button class="btn btn-picker active" data-theme="classic" data-bg="#ffffff" data-fg="#121212">
+              <span class="swatch color-white"></span> Classic
+            </button>
+            <button class="btn btn-picker" data-theme="noir" data-bg="#121212" data-fg="#ffffff">
+              <span class="swatch color-black"></span> Noir
+            </button>
+            <button class="btn btn-picker" data-theme="cyber" data-bg="#1d0630" data-fg="#00f0ff">
+              <span class="swatch color-cyber"></span> Cyber
+            </button>
+            <button class="btn btn-picker" data-theme="lavender" data-bg="#e8e4f5" data-fg="#4a3e72">
+              <span class="swatch color-lavender"></span> Lavender
+            </button>
+            <button class="btn btn-picker" data-theme="peach" data-bg="#fde8e1" data-fg="#8a4d3b">
+              <span class="swatch color-peach"></span> Peach
+            </button>
+            <button class="btn btn-picker" data-theme="sage" data-bg="#e3e8e1" data-fg="#3b533b">
+              <span class="swatch color-sage"></span> Sage
+            </button>
+          </div>
+        </div>
+
+        <!-- Customizer Panel 2: Spacing -->
+        <div class="control-section">
+          <h3>BORDER SIZE</h3>
+          <div class="range-selector">
+            <div class="range-labels">
+              <span>Thin</span>
+              <span>Default</span>
+              <span>Wide</span>
+            </div>
+            <input type="range" id="input-border-width" min="10" max="45" value="25" class="custom-slider">
+          </div>
+        </div>
+
+        <!-- Customizer Panel 3: Label Text / Watermark -->
+        <div class="control-section">
+          <h3>WATERMARK LABEL</h3>
+          <div class="input-group">
+            <input type="text" id="input-watermark" placeholder="Enter custom label" value="DIGI-CAM" maxlength="25">
+          </div>
+          <div class="checkbox-group">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="check-include-date" checked>
+              <span class="checkmark"></span>
+              Include date stamp
+            </label>
+          </div>
+        </div>
+
+        <!-- Customizer Panel 4: Fonts -->
+        <div class="control-section">
+          <h3>LABEL FONT</h3>
+          <div class="font-selector grid-2">
+            <button class="btn btn-font active" data-font="'Space Grotesk', sans-serif">MODERN</button>
+            <button class="btn btn-font" data-font="'Courier Prime', monospace">MONO</button>
+            <button class="btn btn-font" data-font="'Playfair Display', serif">SERIF</button>
+            <button class="btn btn-font" data-font="cursive">CURSIVE</button>
+          </div>
+        </div>
+
+        <!-- Customizer Panel 5: Stickers -->
+        <div class="control-section">
+          <h3>ADD DECORATIONS</h3>
+          <div class="sticker-selector grid-4">
+            <button class="btn btn-sticker" data-sticker="❤️">❤️</button>
+            <button class="btn btn-sticker" data-sticker="✨">✨</button>
+            <button class="btn btn-sticker" data-sticker="⭐">⭐</button>
+            <button class="btn btn-sticker" data-sticker="🎞️">🎞️</button>
+            <button class="btn btn-sticker" data-sticker="✌️">✌️</button>
+            <button class="btn btn-sticker" data-sticker="📸">📸</button>
+            <button class="btn btn-sticker" data-sticker="🔥">🔥</button>
+            <button class="btn btn-sticker" data-sticker="💫">💫</button>
+          </div>
+          <div class="stickers-active-list">
+            <span>Stickers (tap to clear all):</span>
+            <button id="btn-clear-stickers" class="btn btn-small btn-secondary">Clear</button>
+          </div>
+        </div>
+
+        <!-- Export Actions -->
+        <div class="export-actions">
+          <button id="btn-download-strip" class="btn btn-primary btn-large w-full">
+            <span>Download High-Res JPG</span>
+          </button>
+          <button id="btn-print-strip" class="btn btn-secondary w-full">
+            <span>Print Photo Strip</span>
+          </button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Script Execution -->
+  <script src="app.js"></script>
+</body>
+</html>
