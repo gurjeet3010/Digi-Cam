@@ -5,7 +5,7 @@ let activeFilter = { id: 'normal', name: 'Normal', filter: 'none' };
 let layoutShots = 4;
 let capturedPhotos = []; // Stores raw (unfiltered) Canvas elements for maximum post-capture editing flexibility
 let isCapturing = false;
-let activeStickers = [];
+// activeDownloadUrl reference removed, now handled on-demand
 let thumbnailTimer = null;
 let currentTheme = { bg: '#ffffff', fg: '#121212', name: 'classic' };
 
@@ -128,7 +128,7 @@ const inputWatermark = document.getElementById('input-watermark');
 const checkIncludeDate = document.getElementById('check-include-date');
 const btnDownloadStrip = document.getElementById('btn-download-strip');
 const btnPrintStrip = document.getElementById('btn-print-strip');
-const btnClearStickers = document.getElementById('btn-clear-stickers');
+// btnClearStickers removed
 
 // Onboarding & Page Navigation
 btnStartBooth.addEventListener('click', async () => {
@@ -608,16 +608,14 @@ function generateStripCanvas() {
     }
   }
 
-  // 4. Render Active Stickers
-  activeStickers.forEach(stk => {
-    ctx.save();
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `${stk.size}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(stk.emoji, stk.x, stk.y);
-    ctx.restore();
-  });
+  // 4. Render Active Stickers - removed
+
+  // 5. Mirror to Image Element for mobile-friendly save (long-press/tap)
+  const stripImage = document.getElementById('strip-image');
+  if (stripImage) {
+    stripImage.src = stripCanvas.toDataURL('image/jpeg', 0.95);
+  }
+
 }
 
 // Customizer Theme Pickers
@@ -649,43 +647,46 @@ document.querySelectorAll('.font-selector .btn').forEach(btn => {
   });
 });
 
-// Sticker Placer Overlay Engine
-document.querySelectorAll('.sticker-selector .btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const emoji = btn.dataset.sticker;
-    
-    // Add sticker at a random placement within the canvas center zone
-    const pad = 100;
-    const rx = pad + Math.random() * (stripCanvas.width - (2 * pad));
-    // Place randomly in the height timeline
-    const ry = pad + Math.random() * (stripCanvas.height - pad - 130);
-    
-    activeStickers.push({
-      emoji: emoji,
-      x: rx,
-      y: ry,
-      size: 45 + Math.floor(Math.random() * 20) // dynamic size variation
-    });
-    
-    generateStripCanvas();
-  });
-});
+// Sticker Placer Overlay Engine - removed
 
-btnClearStickers.addEventListener('click', () => {
-  activeStickers = [];
-  generateStripCanvas();
-});
+// Export Download - Handled by generating a high-quality Blob on-demand
+btnDownloadStrip.addEventListener('click', (e) => {
+  e.preventDefault();
 
-// Export Download
-btnDownloadStrip.addEventListener('click', () => {
-  if (capturedPhotos.length === 0) return;
-  
-  const link = document.createElement('a');
-  // Set output file naming convention with datestamp
-  const stamp = new Date().toISOString().slice(0,10);
-  link.download = `photobooth-strip-${stamp}.jpg`;
-  link.href = stripCanvas.toDataURL('image/jpeg', 0.95);
-  link.click();
+  // Prevent double clicks during generation
+  if (btnDownloadStrip.classList.contains('generating')) return;
+  btnDownloadStrip.classList.add('generating');
+
+  const originalHTML = btnDownloadStrip.innerHTML;
+  btnDownloadStrip.style.pointerEvents = 'none';
+  btnDownloadStrip.innerHTML = '<span>Generating High-Res JPG...</span>';
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `photobooth-strip-${stamp}.jpg`;
+
+  stripCanvas.toBlob((blob) => {
+    btnDownloadStrip.classList.remove('generating');
+    btnDownloadStrip.style.pointerEvents = 'auto';
+    btnDownloadStrip.innerHTML = originalHTML;
+
+    if (!blob) {
+      alert("Failed to generate the high-res image. Please try again.");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Clean up the object URL after download is initiated
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 150);
+  }, 'image/jpeg', 0.98); // High quality (98%)
 });
 
 // Export Direct Print
