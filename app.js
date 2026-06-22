@@ -182,6 +182,8 @@ async function startCamera() {
     // Attempt standard webcam access
     stream = await navigator.mediaDevices.getUserMedia(constraints);
     videoPreview.srcObject = stream;
+    // Explicitly play to prevent mobile browser autoplay blocks
+    videoPreview.play().catch(e => console.warn("Video play deferred:", e));
     statusLabel.textContent = "LIVE STREAM";
     
     videoPreview.onloadedmetadata = () => {
@@ -286,6 +288,8 @@ function startMockCameraStream() {
   // Capture canvas output stream
   stream = canvas.captureStream(30);
   videoPreview.srcObject = stream;
+  // Explicitly play mock stream
+  videoPreview.play().catch(e => console.warn("Mock video play deferred:", e));
   statusLabel.textContent = "VIRTUAL FEED";
   
   // Make sure video metadata load trigger
