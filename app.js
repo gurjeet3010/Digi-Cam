@@ -14,11 +14,11 @@ const filterPresets = [
   { id: 'normal', name: 'Normal', filter: 'none' },
   { id: 'sepia', name: 'Retro Sepia', filter: 'sepia(0.85) contrast(1.15) brightness(0.95)' },
   { id: 'noir', name: 'B&W Noir', filter: 'grayscale(1) contrast(1.4) brightness(0.9)' },
-  { id: 'cyber', name: 'Cyberpunk', filter: 'hue-rotate(180deg) saturate(1.8) contrast(1.2)' },
+  { id: 'cyber', name: 'Cyberpunk', filter: 'contrast(1.15) saturate(1.35) hue-rotate(330deg) brightness(0.82)' },
   { id: 'vhs', name: 'VHS Glitch', filter: 'saturate(0.55) contrast(1.25) brightness(1.05) sepia(0.1) hue-rotate(-15deg)' },
   { id: 'sunset', name: 'Warm Sunset', filter: 'sepia(0.2) saturate(1.6) contrast(1.1) brightness(0.95)' },
   { id: 'mist', name: 'Cool Mist', filter: 'saturate(0.8) contrast(0.9) hue-rotate(15deg) brightness(1.05)' },
-  { id: 'dream', name: 'Neon Dream', filter: 'saturate(2) hue-rotate(-60deg) contrast(1.2)' }
+  { id: 'dream', name: 'Neon Dream', filter: 'saturate(1.3) contrast(1.05) brightness(0.92) hue-rotate(-10deg) sepia(0.1)' }
 ];
 
 // Synth Engine (Web Audio API)
@@ -369,11 +369,31 @@ function updateFilterThumbnailsLive() {
     
     const ctx = canvas.getContext('2d');
     ctx.save();
+    
+    const videoWidth = videoPreview.videoWidth || 640;
+    const videoHeight = videoPreview.videoHeight || 480;
+    const targetRatio = 4 / 3;
+    
+    let sWidth, sHeight, sx, sy;
+    const currentRatio = videoWidth / videoHeight;
+    
+    if (currentRatio > targetRatio) {
+      sHeight = videoHeight;
+      sWidth = videoHeight * targetRatio;
+      sx = (videoWidth - sWidth) / 2;
+      sy = 0;
+    } else {
+      sWidth = videoWidth;
+      sHeight = videoWidth / targetRatio;
+      sx = 0;
+      sy = (videoHeight - sHeight) / 2;
+    }
+
     // Mirror standard preview
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.filter = preset.filter;
-    ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(videoPreview, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
     ctx.restore();
   });
 }
@@ -502,9 +522,31 @@ function triggerShutterFlash() {
 
 function captureFrame() {
   const canvas = document.createElement('canvas');
-  // Capture high-res proportions from input stream metadata
-  canvas.width = videoPreview.videoWidth || 640;
-  canvas.height = videoPreview.videoHeight || 480;
+  const videoWidth = videoPreview.videoWidth || 640;
+  const videoHeight = videoPreview.videoHeight || 480;
+  
+  // Target a standard 4:3 landscape aspect ratio (1.333)
+  const targetRatio = 4 / 3;
+  
+  let sWidth, sHeight, sx, sy;
+  const currentRatio = videoWidth / videoHeight;
+  
+  if (currentRatio > targetRatio) {
+    // Source is wider than 4:3 (e.g. 16:9). Crop sides.
+    sHeight = videoHeight;
+    sWidth = videoHeight * targetRatio;
+    sx = (videoWidth - sWidth) / 2;
+    sy = 0;
+  } else {
+    // Source is taller than 4:3 (e.g. 9:16). Crop top/bottom.
+    sWidth = videoWidth;
+    sHeight = videoWidth / targetRatio;
+    sx = 0;
+    sy = (videoHeight - sHeight) / 2;
+  }
+  
+  canvas.width = sWidth;
+  canvas.height = sHeight;
   
   const ctx = canvas.getContext('2d');
   
@@ -512,7 +554,7 @@ function captureFrame() {
   // Draw mirrored snapshot to match workspace stream coordinates
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  ctx.drawImage(videoPreview, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(videoPreview, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
   ctx.restore();
   
   return canvas;

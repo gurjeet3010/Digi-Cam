@@ -1023,11 +1023,12 @@ body::before {
 
 
 .export-actions {
-  margin-top: auto;
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-top: 15px;
+  padding-top: 20px;
+  border-top: 2px dashed var(--border-color);
 }
 
 .download-tip {
@@ -1060,6 +1061,12 @@ body::before {
   .strip-preview-section {
     height: auto;
     min-height: 420px;
+  }
+  
+  #strip-image {
+    max-height: 60vh;
+    width: auto;
+    max-width: 100%;
   }
   
   .customizer-sidebar, .workspace-sidebar {
@@ -1122,17 +1129,49 @@ body::before {
     margin-bottom: 25px;
   }
   
-  /* Corner bows scale down */
+  /* Corner bows scale down and shift inward to prevent off-screen clipping */
   .deco-bow {
     width: 36px;
     height: 36px;
   }
   .bow-top-left {
     top: -16px;
-    left: -16px;
+    left: -8px;
   }
   .bow-top-right {
     top: -16px;
-    right: -16px;
+    right: -8px;
+  }
+  
+  /* Mobile padding & spacing alignments */
+  .export-layout {
+    padding: 15px 10px;
+    gap: 15px;
+  }
+  
+  /* Make theme picker options wrap cleanly to 2 columns on small screens */
+  .theme-picker {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  
+  .theme-picker .btn-picker {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 80px;
+    padding: 10px 8px;
+    font-size: 0.75rem;
+  }
+  
+  /* Make font selector labels fit cleanly */
+  .font-selector .btn-font {
+    padding: 10px 6px;
+    font-size: 0.75rem;
+  }
+  
+  /* Global viewport overflow restriction safety guard */
+  html, body {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
   }
 }
